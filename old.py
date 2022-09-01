@@ -24,7 +24,6 @@ p_ref = 2*10**(-5)
 
 def runningMeanFast(x, N):
     """
-
     :param x: Signal array
     :param N: Window_length
     :return: array with running mean values
