@@ -21,7 +21,6 @@ third_octave_center_frequencies = [12.5, 16, 20, 25, 31.5, 40, 50, 63, 80, 100, 
             5000, 6300, 8000, 10000, 12500, 16000, 20000]
 p_ref = 2*10**(-5)
 
-
 def runningMeanFast(x, N):
     """
     :param x: Signal array

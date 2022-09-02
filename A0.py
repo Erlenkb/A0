@@ -1,12 +1,34 @@
+from tkinter import N
 import numpy as np
 from scipy.io import wavfile
 import matplotlib.pyplot as plt
 
 import values
 
+def _time_to_discrete(timeval,fs):
+    return int(timeval * fs)
 
-array = [1,2,2,1,34,1,3,2,34,1,2,2,21,3,2]
+def _Leq_125ms(array,fs):
+    N = _time_to_discrete(0.125, fs)
+    it = len(array) // N
+    array = np.split(array, it)
+    l_eq = []
+    for n in array: 
+        sum = 0
+        for i in n: sum += (i/values.p0)**2
+        l_eq.append(10*np.log10(sum /len(array)))
+    return l_eq
 
+def _Leq_1s(array, fs):
+    N = _time_to_discrete(1, fs)
+    it = len(array) // N
+    array = np.split(array, it)
+    l_eq = []
+    for n in array: 
+        sum = 0
+        for i in n: sum += (i/values.p0)**2
+        l_eq.append(10*np.log10(sum /len(array)))
+    return l_eq
 
 def _nextpow2(i):
     n = 1
@@ -20,9 +42,19 @@ def _octave_filter():
     return 1
 
 def _fft_signal(array, fs):
-    fft = np.fft.fft(array, fs)
+    N = len(array)
+    y = np.fft.fft(array,norm="backward")[0:int(N/2)]/N
+    y[0:] = 2*y[0:]
+    p_y = 20*np.log10(np.abs(y) / values.p0)
+    f = fs*np.arange((N/2))/N
+    sum = 0
+    for i in p_y :
+        sum += 10**(i/10)
+    print("Lp from fft: {}".format(10*np.log10(sum)))
+    fft = np.fft.fft(array,fs, norm="ortho")
+    fft = 20*np.log10(fft/values.p0)
     freq = np.fft.fftfreq(n=len(fft), d=1/fs)
-    plt.plot(np.fft.fftshift(freq), np.fft.fftshift(np.abs(fft)), color="blue", label="Upper microphone")
+    plt.plot(f, p_y, color="blue", label="Upper microphone")
     
     plt.xlabel("Frequency [Hz]")
     plt.ylabel("Magnitude")
@@ -30,13 +62,11 @@ def _fft_signal(array, fs):
     plt.grid(which="major")
     plt.grid(which="minor", linestyle=":")
     plt.xscale("log")
-    #plt.xlim(82, 2000)
+    plt.xlim(32.5, 5000)
     #plt.ylim(15, 50)
     plt.legend()
-
     plt.show()
-
-
+    return freq, fft
 
 def _calculate_Lp(array):
     rms_pressure = np.sqrt(np.mean(array**2))
@@ -68,10 +98,13 @@ def _check_calibration(cal_before, cal_after):
     print("Calibration before measurements: {0:.1f} dB\nCalibration after measurements: {1:.1f} dB ".format(Lp_before,Lp_after))
 
 
+def _plot_step_Leq(arr1, arr2, fs):
+    time = len(arr1) / fs
+    timeval = np.linspace(0,time, len(array))
+    fig, ax = plt.subplots(figsize=(8,7))
 
-
-
-
+    ax.step(timeval, )
+    
 
 
 if __name__ == '__main__':
@@ -80,26 +113,24 @@ if __name__ == '__main__':
     fs_cal, cal_before = wavfile.read("cal_before.wav")
     fs_cal, cal_after = wavfile.read("cal_after.wav")
 
+    
+
+
     #print("A:", _scaling_factor(cal_before))
 
     _check_calibration(cal_before,cal_after)
     array = _scale_array(sound_file,cal_before)
-    fft = np.fft.fft(array, fs_cal)
-    fft = 20*np.log10(np.abs(fft) / values.p0)
-    freq = np.fft.fftfreq(n=len(fft), d=1/fs_cal)
-    plt.plot(np.fft.fftshift(freq), np.fft.fftshift(np.abs(fft)), color="blue", label="Upper microphone")
     
-    plt.xlabel("Frequency [Hz]")
-    plt.ylabel("Magnitude")
-    plt.xscale("log")
-    plt.grid(which="major")
-    plt.grid(which="minor", linestyle=":")
-    plt.xscale("log")
+    freq, fft = _fft_signal(array, fs_cal)
+    print("Lp signal:",_calculate_Lp(array))
     
-    plt.legend()
+    
+    l_eq_125ms = _Leq_125ms(array,fs_cal)
+    l_eq_1s = _Leq_1s(array,fs_cal)
 
-    plt.show()
+
+
+
+  
 
     print(_calc_p_peak(94))
-
-    #print(_calculate_Lp(sound_file))
