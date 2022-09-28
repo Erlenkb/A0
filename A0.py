@@ -5,6 +5,22 @@ import matplotlib.pyplot as plt
 import scipy.signal as signal
 import values
 
+####### Font values #######
+SMALL_SIZE = 12
+MEDIUM_SIZE = 14
+BIGGER_SIZE = 16
+
+plt.rc('font', size=MEDIUM_SIZE)
+plt.rc('axes', titlesize=BIGGER_SIZE)
+plt.rc('axes', labelsize=MEDIUM_SIZE)
+plt.rc('xtick', labelsize=MEDIUM_SIZE)
+plt.rc('ytick', labelsize=SMALL_SIZE)
+plt.rc('legend', fontsize=SMALL_SIZE)
+plt.rc('figure', titlesize=BIGGER_SIZE)
+###########################
+
+
+
 def _time_to_discrete(timeval,fs):
     """Returns discrete timevalue
     Args:
@@ -98,6 +114,14 @@ def _Lp_from_freq(fft, freq):
         Lp += 10**(fft[i]/10)
     return 10*np.log10(Lp)
 
+def _runningMeanFast(x, N):
+    """
+    :param x: Signal array
+    :param N: Window_length
+    :return: array with running mean values
+    """
+    return np.convolve(x, np.ones((N,))/N)[(N-1):]
+
 def _fft_signal(array, fs):
     """Generate the FFT and frequency axis values of the time signal
 
@@ -111,7 +135,9 @@ def _fft_signal(array, fs):
     N = len(array)
     y = np.fft.fft(array)[0:int(N/2)]/N
     y = 1.41*y
-    p_y = 20*np.log10(np.abs(y) / values.p0)
+    #y = _runningMeanFast(y,5)
+    p_y = 20*np.log10(_runningMeanFast(np.abs(y),3) / values.p0)
+    #p_y = _runningMeanFast(p_y, 5)            # Mulig sløyfe denne. Mister energi i spektrumet siden den middler uten å gå over til Pa først.
     f = fs*np.arange((N/2))/N
     return f, p_y
 
@@ -165,7 +191,6 @@ def _calc_p_peak(cal_value):
     """
     p_rms = values.p0 * 10**(cal_value/20)
     p_peak = p_rms / 0.707
-    #print("Pressure peak: {}".format(p_peak))
     return round(p_peak,9)
 
 def _scaling_factor(cal_array):
@@ -314,7 +339,7 @@ def _plot_fft_and_third_oct(freq, fft, third_oct_val, third_oct_step, fft_A, fre
     ax.set_xscale("log")
     ax.set_xticks(values.x_ticks_third_octave)
     ax.set_xticklabels(values.x_ticks_third_octave_labels)
-    ax.set_xlim(30,5000)
+    ax.set_xlim(values.freq_min, values.freq_max)
     ax.legend()
     fig.savefig("FFT&Third_oct_{0} s_to_{1} s.png".format(values.start,values.stop))
 
@@ -342,14 +367,10 @@ def _print_stuff(fs_sound_file=0, sound_file=0, cal_before=0, cal_after=0, A=0, 
     
     print("- Sampling frequency: {0} Hz -- length of file {1} Seconds \n- Start point: {2} s -- End point: {3} s"
           .format(fs_cal, len(array)/fs_cal, values.start, values.stop))
-    
     print("- Scaling factor A={}".format(round(A,1)))
-    
     print("- Calibration before measurements: {0:.1f} dB\n- Calibration after measurements: {1:.1f} dB "
           .format(cal_before_Lp, cal_after_Lp))
-    
     print("- Total Lp from entire sound signal Z-weighted: {0:.1f} dB \n- Total Lp from Third octave bands Z-weighted: {1:.1f}".format(_calculate_Lp(array), Lp_fft))
-    
     print("\t\t Z-weighted \t A-weighted\n Lp,fft\t\t{0:.1f} dB\t\t{1:.1f} dB\n Lp,1/3 \t{2:.1f} dB \t{3:.1f} dB".format(Lp_fft, Lp_fft_A, third_oct, third_oct_A))
     
     print("\n******************************************")
@@ -385,7 +406,7 @@ if __name__ == '__main__':
                                                     values.third_octave_lower[values.third_octave_start:])
     filtered_signal_A = _sort_into_third_octave_bands(freq_A, fft_A, 
                                                       values.third_octave_lower[values.third_octave_start:])
-
+    
     #*********   Plot the FFT and 1/3 octave band values and return the Lp values for these *****
     Lp_fft, Lp_fft_A, third_oct, third_oct_A  = _plot_fft_and_third_oct(freq, fft, filtered_signal, 
                             values.third_octave_center_frequencies[values.third_octave_start:], 
