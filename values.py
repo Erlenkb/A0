@@ -1,33 +1,20 @@
 p0 = 20*10**(-6)
 cal_value = 94
+start = 40
+stop = 46
+third_octave_start = 4
 
-import numpy as np
-import matplotlib.pyplot as plt
-"""
-i = 1
-x = np.linspace(0,i,i*44100)
-x1 = np.linspace(0,i*10, i*10*44100)
-y = np.sin(2*np.pi*x*3)
-y1 = np.sin(2*np.pi*x1*3)
+x_ticks_third_octave = 
+x_ticks_third_octave_labels = 
 
-fft = np.fft.fft(y)
-fft1 = np.fft.fft(y1,44100)
-freq = np.fft.fftfreq(n = len(fft), d=1/44100)
-freq1 = np.fft.fftfreq(n=len(fft1), d=(1/44100))
+THIRD_OCTAVE_A_WEIGHTING = [
+    -63.4, -56.7, -50.5, -44.7, -39.4, -34.6, -30.2, -26.2, -22.5, -19.1, -16.1, -13.4, -10.9, -8.6, -6.6, -4.8, -3.2,
+    -1.9, -0.8, +0.0, +0.6, +1.0, +1.2, +1.3, +1.2, +1.0, +0.5, -0.1, -1.1, -2.5, -4.3, -6.6, -9.3
+]
 
-plt.plot(np.fft.fftshift(freq), np.fft.fftshift(fft),color="blue")
-plt.plot(np.fft.fftshift(freq1), np.fft.fftshift(fft1),color="red")
+third_octave_center_frequencies = [12.5, 16, 20, 25, 31.5, 40, 50, 63, 80, 100, 125, 160, 200, 250,
+            315, 400, 500, 630, 800, 1000, 1250, 1600, 2000, 2500, 3150, 4000,
+            5000, 6300, 8000, 10000, 12500, 16000, 20000]
+third_octave_lower = [11.2, 14.1, 17.8, 22.4, 28.2, 35.5, 44.7, 56.2, 70.8, 89.1, 112, 141, 178, 224, 282, 355, 447, 562, 708, 891, 1122, 1413, 1778, 2239, 2818, 3548, 4467, 5623, 7079, 8913, 11220, 14130, 17780,22390]
 
-plt.xlabel("Frequency [Hz]")
-plt.ylabel("Magnitude")
-plt.xscale("log")
-plt.grid(which="major")
-plt.grid(which="minor", linestyle=":")
-plt.xscale("log")
-    
-plt.legend()
 
-plt.show()
-plt.plot(x,y)
-plt.show()
-"""
