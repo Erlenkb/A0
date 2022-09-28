@@ -59,10 +59,8 @@ def _Lp_from_freq(fft, freq):
 
 def _fft_signal(array, fs):
     N = len(array)
-    fft = np.fft.fft(array, fs)
-    freq = np.fft.fftfreq(len(fft), d=1/fs)
     y = np.fft.fft(array)[0:int(N/2)]/N
-    y[0:] = 2*y[0:]
+    y = 1.41*y
     p_y = 20*np.log10(np.abs(y) / values.p0)
     f = fs*np.arange((N/2))/N
     return f, p_y
@@ -198,9 +196,9 @@ def _plot_fft_and_third_oct(freq, fft, third_oct_val, third_oct_step, fft_A, fre
     return Lp_fft, Lp_fft_A, Lp_third_oct, Lp_third_oct_A
 
 def _print_stuff(fs_sound_file=0, sound_file=0, cal_before=0, cal_after=0, A=0, Lp_fft=0, Lp_fft_A=0, third_oct=0, third_oct_A=0, cal_before_Lp=0,cal_after_Lp=0, array=0):
-    print("********************\n")
+    print("********** -- Important values -- **********\n")
     
-    print("Sampling frequency: {0} Hz -- length of file {1} minutes\nStart point: {2} s -- End point: {3} s"
+    print("Sampling frequency: {0} Hz -- length of file {1} Seconds \nStart point: {2} s -- End point: {3} s"
           .format(fs_cal, len(array)/fs_cal, values.start, values.stop))
     
     print("Scaling factor A={}".format(round(A,1)))
@@ -212,7 +210,7 @@ def _print_stuff(fs_sound_file=0, sound_file=0, cal_before=0, cal_after=0, A=0, 
     
     print("\t\t Z-weighted \t A-weighted\n Lp,fft\t\t{0:.1f} dB\t\t{1:.1f} dB\n Lp,1/3 \t{2:.1f} dB \t{3:.1f} dB".format(Lp_fft, Lp_fft_A, third_oct, third_oct_A))
     
-    print("\n********************")
+    print("\n******************************************")
 
 
 if __name__ == '__main__':
