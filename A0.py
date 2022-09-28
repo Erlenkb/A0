@@ -6,13 +6,39 @@ import scipy.signal as signal
 import values
 
 def _time_to_discrete(timeval,fs):
+    """Returns discrete timevalue
+    Args:
+        timeval (_type_): Takes in time interval in s
+        fs (_type_): Samplingfrequency
+
+    Returns:
+        _type_: Discrete time value
+    """
     return int(timeval * fs)
 
 def _split_padded(a,n):
-     padding = (-len(a))%n
-     return np.split(np.concatenate((a,np.zeros(padding))),n)
+    """Padd end of array to make room for even splitting in _Leq functions
+
+    Args:
+        a (_type_): array
+        n (_type_): split length
+
+    Returns:
+        _type_: Array divided into even slices.
+    """
+    padding = (-len(a))%n
+    return np.split(np.concatenate((a,np.zeros(padding))),n)
 
 def _Leq_125ms(array,fs):
+    """Create L_eq with fast (125 ms) time interval
+
+    Args:
+        array (_type_): Sound signal array
+        fs (_type_): Samplingfrequency
+
+    Returns:
+        _type_: array containing Leq and the timestep values
+    """
     N = _time_to_discrete(0.125, fs)
     it = len(array) // N
     
@@ -29,11 +55,17 @@ def _Leq_125ms(array,fs):
     return l_eq, time, 10*np.log10(leq_total / len(l_eq))
 
 def _Leq_1s(array, fs):
+    """Create L_eq with slow (1 s) time interval
+
+    Args:
+        array (_type_): Sound signal array
+        fs (_type_): Samplingfrequency
+
+    Returns:
+        _type_: array containing Leq and the timestep values
+    """
     N = _time_to_discrete(1, fs)
     it = len(array) // N
-
-    #print(it, " : ", len(array)," : ", len(array) / it)
-
     array1 = _split_padded(array, it)
     
     l_eq = []
@@ -48,6 +80,15 @@ def _Leq_1s(array, fs):
     return l_eq, time, 10*np.log10(leq_total / len(l_eq))
 
 def _Lp_from_freq(fft, freq):
+    """Generate Lp from array in frequency domain
+
+    Args:
+        fft (_type_): FFT array
+        freq (_type_): Frequency array
+
+    Returns:
+        _type_: _description_
+    """
     it = []
     for i, val in enumerate(freq):
         if (val >= 0 and val <= 22390):
@@ -58,6 +99,15 @@ def _Lp_from_freq(fft, freq):
     return 10*np.log10(Lp)
 
 def _fft_signal(array, fs):
+    """Generate the FFT and frequency axis values of the time signal
+
+    Args:
+        array (_type_): Sound pressure array
+        fs (_type_): Samplingfrequency
+
+    Returns:
+        _type_: Frequency array and FFT values
+    """
     N = len(array)
     y = np.fft.fft(array)[0:int(N/2)]/N
     y = 1.41*y
@@ -66,6 +116,16 @@ def _fft_signal(array, fs):
     return f, p_y
 
 def _A_weight(array, fs):
+    """Calculate the A weighted filter ad applying it to the sound pressure array.
+    Constants are given in the IEC
+
+    Args:
+        array (_type_): Sound pressure array
+        fs (_type_): Samplingfrequency
+
+    Returns:
+        _type_: The A-weighted sound pressure array
+    """
     f1 = 20.598997
     f2 = 107.65265
     f3 = 737.86223
@@ -83,26 +143,68 @@ def _A_weight(array, fs):
     return y
 
 def _calculate_Lp(array):
+    """Calculate the sound pressure level for a sound pressure array
+
+    Args:
+        array (_type_): Sound pressure array
+
+    Returns:
+        _type_: Lp
+    """
     rms_pressure = np.sqrt(np.mean(array**2))
     return 20*np.log10(rms_pressure / values.p0)
 
 def _calc_p_peak(cal_value):
+    """Find the pressure peak for the calibration signal
+
+    Args:
+        cal_value (_type_): Calibration array
+
+    Returns:
+        _type_: Pressure peak
+    """
     p_rms = values.p0 * 10**(cal_value/20)
     p_peak = p_rms / 0.707
     #print("Pressure peak: {}".format(p_peak))
     return round(p_peak,9)
 
 def _scaling_factor(cal_array):
+    """Find the scaling factor to apply to the sound pressure array which are from a wav signal containing values between 0-1
+
+    Args:
+        cal_array (_type_): Calibration array
+
+    Returns:
+        _type_: Scaling factor A
+    """
     p_peak = _calc_p_peak(values.cal_value)
     d_peak = np.mean(np.sort(cal_array[len(cal_array) // 4 : len(cal_array)-len(cal_array) // 4])[-10:])
     #print("Discrete peak: {}".format(d_peak))
     return d_peak / p_peak
 
 def _scale_array(array, cal_array):
+    """Apply the scaling factor to a sound pressure array
+
+    Args:
+        array (_type_): Sound pressure array to be scaled
+        cal_array (_type_): Sound pressure array from calibration signal
+
+    Returns:
+        _type_: Scaled array and A factor
+    """
     A = _scaling_factor(cal_array)    
     return array / A, A
 
 def _check_calibration(cal_before, cal_after):
+    """Check calibration signal before and after measurement
+
+    Args:
+        cal_before (_type_): Calibration signal before measurement
+        cal_after (_type_): Calibration signal after measurement
+
+    Returns:
+        _type_: Sound pressure level, Lp, before and after, as well as scaling factor A
+    """
     cal_before, A = _scale_array(cal_before, cal_before)
     cal_after, A = _scale_array(cal_after, cal_after)
 
@@ -111,6 +213,12 @@ def _check_calibration(cal_before, cal_after):
     return Lp_before, Lp_after, A
 
 def _plot_step_Leq(arr, fs):
+    """Plot the Leq values for the given time interval
+
+    Args:
+        arr (_type_): Sound pressure array
+        fs (_type_): Samplingfrequency
+    """
     l_eq_125ms, time_125ms, leq_tot_125 = _Leq_125ms(arr,fs_cal)
     l_eq_1s, time_1s, leq_tot_1 = _Leq_1s(arr,fs_cal)
     l_eq_1s.append(l_eq_1s[-1])
@@ -128,11 +236,29 @@ def _plot_step_Leq(arr, fs):
     plt.show()
 
 def _Lp_from_third_oct(arr):
+    """Return the sound pressure level from the third octave band array
+
+    Args:
+        arr (_type_): Third octave band array
+
+    Returns:
+        _type_: Lp
+    """
     Lp = 0
     for i in arr: Lp += 10**(i/10)
     return 10*np.log10(Lp)
 
 def _sort_into_third_octave_bands(freq, array, third_oct):
+    """Takes in the FFT and frequency values and sort it into third octave bands
+
+    Args:
+        freq (_type_): Frequency array
+        array (_type_): FFT aray
+        third_oct (_type_): Third octave lower frequency values
+
+    Returns:
+        _type_: Filtered array using third octave bands
+    """
     third_octave_banks = []
     single_bank = []
     i = 0
@@ -196,6 +322,22 @@ def _plot_fft_and_third_oct(freq, fft, third_oct_val, third_oct_step, fft_A, fre
     return Lp_fft, Lp_fft_A, Lp_third_oct, Lp_third_oct_A
 
 def _print_stuff(fs_sound_file=0, sound_file=0, cal_before=0, cal_after=0, A=0, Lp_fft=0, Lp_fft_A=0, third_oct=0, third_oct_A=0, cal_before_Lp=0,cal_after_Lp=0, array=0):
+    """Print important values in a good way :)
+
+    Args:
+        fs_sound_file (int, optional): _description_. Defaults to 0.
+        sound_file (int, optional): _description_. Defaults to 0.
+        cal_before (int, optional): _description_. Defaults to 0.
+        cal_after (int, optional): _description_. Defaults to 0.
+        A (int, optional): _description_. Defaults to 0.
+        Lp_fft (int, optional): _description_. Defaults to 0.
+        Lp_fft_A (int, optional): _description_. Defaults to 0.
+        third_oct (int, optional): _description_. Defaults to 0.
+        third_oct_A (int, optional): _description_. Defaults to 0.
+        cal_before_Lp (int, optional): _description_. Defaults to 0.
+        cal_after_Lp (int, optional): _description_. Defaults to 0.
+        array (int, optional): _description_. Defaults to 0.
+    """
     print("********** -- Important values -- **********\n")
     
     print("Sampling frequency: {0} Hz -- length of file {1} Seconds \nStart point: {2} s -- End point: {3} s"
@@ -215,51 +357,44 @@ def _print_stuff(fs_sound_file=0, sound_file=0, cal_before=0, cal_after=0, A=0, 
 
 if __name__ == '__main__':
     
+    #**********  Generate sound pressure arrays *******
     fs_sound_file, sound_file = wavfile.read("A0_lydfil.wav")
     fs_cal, cal_before = wavfile.read("cal_before.wav")
     fs_cal, cal_after = wavfile.read("cal_after.wav")
     
+    #*********   Check calibration, find scaling factor and scale sound pressure array******
     cal_before_Lp, cal_after_Lp, A = _check_calibration(cal_before,cal_after)
     array, A = _scale_array(sound_file,cal_before)
     start = values.start*fs_cal
     stop = values.stop*fs_cal
-
     array = array[start:stop]
+    
+    #*********   Filter sound pressure array into A-weighted array *******
     array_A_weighted = _A_weight(array, fs_sound_file)
     
+    #*********   Calculate the Leq arrays for fast (125 ms) and slow (1 s) time constants  ******
     l_eq_125ms, time_125ms, leq_tot_125 = _Leq_125ms(array,fs_cal)
     l_eq_1s, time_1s, leq_tot_1 = _Leq_1s(array,fs_cal)
     
+    #*********   Generate the FFT and frequency array for Z- and A-weighted sound pressure array ******
     freq, fft = _fft_signal(array, fs_sound_file)
     freq_A, fft_A = _fft_signal(array_A_weighted, fs_sound_file)
 
+    #*********   Sort FFT values into third octave bands for Z- and A-weighted FFT signal ******
     filtered_signal = _sort_into_third_octave_bands(freq, fft, 
                                                     values.third_octave_lower[values.third_octave_start:])
     filtered_signal_A = _sort_into_third_octave_bands(freq_A, fft_A, 
                                                       values.third_octave_lower[values.third_octave_start:])
 
-
+    #*********   Plot the FFT and 1/3 octave band values and return the Lp values for these *****
     Lp_fft, Lp_fft_A, third_oct, third_oct_A  = _plot_fft_and_third_oct(freq, fft, filtered_signal, 
                             values.third_octave_center_frequencies[values.third_octave_start:], 
                             fft_A, freq_A, filtered_signal_A)
 
-    
+    #*********   plot the Leq values in steps   ******
     _plot_step_Leq(array, fs_cal)
     
-    _print_stuff(fs_sound_file, sound_file, cal_before, cal_after, A, Lp_fft, Lp_fft_A, third_oct, third_oct_A, cal_before_Lp,cal_after_Lp, array)
-    
-    
-
-  
-
-
-    
-
-
-    
-
-
-
-  
-
-    #print(_calc_p_peak(94))
+    #*********   Print the important parameters ******
+    _print_stuff(fs_sound_file, sound_file, cal_before, cal_after, A, 
+                 Lp_fft, Lp_fft_A, third_oct, third_oct_A, cal_before_Lp,
+                 cal_after_Lp, array)
