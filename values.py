@@ -1,7 +1,7 @@
 p0 = 20*10**(-6)
 cal_value = 94
-start = 40
-stop = 46
+start = 0
+stop = 60
 third_octave_start = 4
 
 x_ticks_third_octave = [50, 100, 200, 500, 1000, 2000, 5000]
