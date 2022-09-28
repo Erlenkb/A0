@@ -340,15 +340,15 @@ def _print_stuff(fs_sound_file=0, sound_file=0, cal_before=0, cal_after=0, A=0, 
     """
     print("********** -- Important values -- **********\n")
     
-    print("Sampling frequency: {0} Hz -- length of file {1} Seconds \nStart point: {2} s -- End point: {3} s"
+    print("- Sampling frequency: {0} Hz -- length of file {1} Seconds \n- Start point: {2} s -- End point: {3} s"
           .format(fs_cal, len(array)/fs_cal, values.start, values.stop))
     
-    print("Scaling factor A={}".format(round(A,1)))
+    print("- Scaling factor A={}".format(round(A,1)))
     
-    print("Calibration before measurements: {0:.1f} dB\nCalibration after measurements: {1:.1f} dB "
+    print("- Calibration before measurements: {0:.1f} dB\n- Calibration after measurements: {1:.1f} dB "
           .format(cal_before_Lp, cal_after_Lp))
     
-    print("Total Lp from entire sound signal Z-weighted: {0:.1f} dB \nTotal Lp from Third octave bands Z-weighted: {1:.1f}".format(_calculate_Lp(array), Lp_fft))
+    print("- Total Lp from entire sound signal Z-weighted: {0:.1f} dB \n- Total Lp from Third octave bands Z-weighted: {1:.1f}".format(_calculate_Lp(array), Lp_fft))
     
     print("\t\t Z-weighted \t A-weighted\n Lp,fft\t\t{0:.1f} dB\t\t{1:.1f} dB\n Lp,1/3 \t{2:.1f} dB \t{3:.1f} dB".format(Lp_fft, Lp_fft_A, third_oct, third_oct_A))
     
