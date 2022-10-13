@@ -120,7 +120,7 @@ def _runningMeanFast(x, N):
     :param N: Window_length
     :return: array with running mean values
     """
-    return np.convolve(x, np.ones((N,))/N)[(N-1):]
+    return 10*np.log10(np.convolve(10**(x/10), np.ones((N,))/N)[(N-1):])
 
 def _fft_signal(array, fs):
     """Generate the FFT and frequency axis values of the time signal
@@ -132,13 +132,13 @@ def _fft_signal(array, fs):
     Returns:
         _type_: Frequency array and FFT values
     """
-    N = len(array)
-    y = np.fft.fft(array)[0:int(N/2)]/N
-    y = 1.41*y
-    #y = _runningMeanFast(y,5)
-    p_y = 20*np.log10(_runningMeanFast(np.abs(y),3) / values.p0)
-    #p_y = _runningMeanFast(p_y, 5)            # Mulig sløyfe denne. Mister energi i spektrumet siden den middler uten å gå over til Pa først.
-    f = fs*np.arange((N/2))/N
+    if (values.nfft != 0) : N = values.nfft
+    if (values.nfft == 0) : N = len(array)
+    y = np.fft.fft(array, N)[0:int(N/2)]/N
+    #y = _runningMeanFast(y,2)
+    #y = np.sqrt(2)*y
+    p_y = 20*np.log10(np.abs(y) / values.p0)
+    f = N*np.arange((N/2))/N
     return f, p_y
 
 def _A_weight(array, fs):
@@ -250,8 +250,8 @@ def _plot_step_Leq(arr, fs):
     l_eq_125ms.append(l_eq_125ms[-1])
 
     fig, ax = plt.subplots(figsize=(8,7))
-    ax.step(time_125ms, l_eq_125ms, where="post",label=str("$L_{eq,125ms}$ - $L_{eq,tot}$ : "+ str(round(leq_tot_125,1)) +" dB"))
-    ax.step(time_1s, l_eq_1s,where="post", label=str("$L_{eq,1s}$ - $L_{eq,tot}$: " + str(round(leq_tot_125,1)) +" dB"))
+    ax.step(time_125ms, l_eq_125ms, color="olive", where="post",label=str("$L_{eq,125ms}$ - $L_{eq,tot}$ : "+ str(round(leq_tot_125,1)) +" dB"))
+    ax.step(time_1s, l_eq_1s,where="post", color="forestgreen", label=str("$L_{eq,1s}$ - $L_{eq,tot}$: " + str(round(leq_tot_125,1)) +" dB"))
     ax.legend()
     ax.set_title("Equivalent sound pressure level for \n fast (125 ms) and slow (1s) time constants")
     ax.set_xlabel("Time [s]")
@@ -273,7 +273,7 @@ def _Lp_from_third_oct(arr):
     for i in arr: Lp += 10**(i/10)
     return 10*np.log10(Lp)
 
-def _sort_into_third_octave_bands(freq, array, third_oct):
+def _sort_into_third_octave_bands(freq, array, third_oct, A_weight_val):
     """Takes in the FFT and frequency values and sort it into third octave bands
 
     Args:
@@ -287,7 +287,6 @@ def _sort_into_third_octave_bands(freq, array, third_oct):
     third_octave_banks = []
     single_bank = []
     i = 0
-
     for it, x in enumerate(freq):
         if (x > third_oct[-1]) : break
         if (x >= third_oct[i] and x < third_oct[i+1]): 
@@ -298,8 +297,10 @@ def _sort_into_third_octave_bands(freq, array, third_oct):
             single_bank = []
             single_bank.append(round(array[it],2))
     filtered_array = []
+    filtered_signal_A = []
     for n in third_octave_banks : filtered_array.append(_Lp_from_third_oct(n))
-    return filtered_array
+    for n, val in enumerate(filtered_array) : filtered_signal_A.append(val + A_weight_val[n])
+    return filtered_array, filtered_signal_A
 
 def _plot_fft_and_third_oct(freq, fft, third_oct_val, third_oct_step, fft_A, freq_A, third_oct_val_A):
     """ Takes in FFT and third octave filtered signal for both Z- and A-weighted signal and plot the values in one figure
@@ -324,8 +325,8 @@ def _plot_fft_and_third_oct(freq, fft, third_oct_val, third_oct_step, fft_A, fre
     Lp_fft_A = _Lp_from_freq(fft_A,freq_A)
     Lp_third_oct_A = _Lp_from_freq(third_oct_val_A,third_oct_step)
 
-    ax.plot(freq, np.abs(fft), color="darkorange",label="FFT Z-weighted")
-    ax.plot(freq_A, np.abs(fft_A), color="olive",label="FFT A-weighted")
+    ax.plot(freq, np.abs(fft), color="olive",label="FFT Z-weighted")
+    #ax.plot(freq_A, np.abs(fft_A), color="olive",label="FFT A-weighted")
     ax.step(third_oct_step, third_oct_val, linewidth=2.2, where="mid", 
             color="dimgray", label="1/3-octave filter Z-weighted")
     ax.step(third_oct_step, third_oct_val_A, linewidth=2.2, 
@@ -365,15 +366,16 @@ def _print_stuff(fs_sound_file=0, sound_file=0, cal_before=0, cal_after=0, A=0, 
     """
     print("********** -- Important values -- **********\n")
     
-    print("- Sampling frequency: {0} Hz -- length of file {1} Seconds \n- Start point: {2} s -- End point: {3} s"
+    print("- Sampling frequency: {0} Hz -- length of file {1} Seconds \n- Start point: {2} s \n- End point: {3} s"
           .format(fs_cal, len(array)/fs_cal, values.start, values.stop))
-    print("- Scaling factor A={}".format(round(A,1)))
+    print("- Scaling factor A = {}".format(round(A,1)))
     print("- Calibration before measurements: {0:.1f} dB\n- Calibration after measurements: {1:.1f} dB "
           .format(cal_before_Lp, cal_after_Lp))
-    print("- Total Lp from entire sound signal Z-weighted: {0:.1f} dB \n- Total Lp from Third octave bands Z-weighted: {1:.1f}".format(_calculate_Lp(array), Lp_fft))
+    print("- Total Lp from sound pressure signal Z-weighted: {0:.1f} dB \n- Total Lp from Third octave bands Z-weighted: {1:.1f} dB".format(_calculate_Lp(array), Lp_fft))
     print("\t\t Z-weighted \t A-weighted\n Lp,fft\t\t{0:.1f} dB\t\t{1:.1f} dB\n Lp,1/3 \t{2:.1f} dB \t{3:.1f} dB".format(Lp_fft, Lp_fft_A, third_oct, third_oct_A))
     
     print("\n******************************************")
+
 
 
 if __name__ == '__main__':
@@ -386,6 +388,7 @@ if __name__ == '__main__':
     #*********   Check calibration, find scaling factor and scale sound pressure array******
     cal_before_Lp, cal_after_Lp, A = _check_calibration(cal_before,cal_after)
     array, A = _scale_array(sound_file,cal_before)
+    
     start = values.start*fs_cal
     stop = values.stop*fs_cal
     array = array[start:stop]
@@ -402,10 +405,13 @@ if __name__ == '__main__':
     freq_A, fft_A = _fft_signal(array_A_weighted, fs_sound_file)
 
     #*********   Sort FFT values into third octave bands for Z- and A-weighted FFT signal ******
-    filtered_signal = _sort_into_third_octave_bands(freq, fft, 
-                                                    values.third_octave_lower[values.third_octave_start:])
-    filtered_signal_A = _sort_into_third_octave_bands(freq_A, fft_A, 
-                                                      values.third_octave_lower[values.third_octave_start:])
+    filtered_signal, filtered_signal_A = _sort_into_third_octave_bands(freq, fft, 
+                                                    values.third_octave_lower[values.third_octave_start:], 
+                                                    values.THIRD_OCTAVE_A_WEIGHTING[values.third_octave_start:])
+    
+    if (values.A_weight_freq == False):
+        filtered_signal_A = _sort_into_third_octave_bands(freq_A, fft_A, 
+                                                          values.third_octave_lower[values.third_octave_start:])
     
     #*********   Plot the FFT and 1/3 octave band values and return the Lp values for these *****
     Lp_fft, Lp_fft_A, third_oct, third_oct_A  = _plot_fft_and_third_oct(freq, fft, filtered_signal, 
