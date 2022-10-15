@@ -257,7 +257,7 @@ def _plot_step_Leq(arr, fs):
     ax.set_xlabel("Time [s]")
     ax.set_ylabel("Magnitude [dB]")
     plt.grid()
-    fig.savefig("Leq,fast,slow_{0}s_to_{1}s.png".format(values.start,values.stop))
+    fig.savefig("Pictures\Leq,fast,slow_{0}s_to_{1}s.png".format(values.start,values.stop))
     plt.show()
 
 def _Lp_from_third_oct(arr):
@@ -342,8 +342,8 @@ def _plot_fft_and_third_oct(freq, fft, third_oct_val, third_oct_step, fft_A, fre
     ax.set_xticklabels(values.x_ticks_third_octave_labels)
     ax.set_xlim(values.freq_min, values.freq_max)
     ax.legend()
-    fig.savefig("FFT&Third_oct_{0} s_to_{1} s.png".format(values.start,values.stop))
-
+    fig.savefig("Pictures\FFT&Third_oct_{0} s_to_{1} s.png".format(values.start,values.stop))
+    
     plt.show()
     return Lp_fft, Lp_fft_A, Lp_third_oct, Lp_third_oct_A
 

@@ -1,7 +1,7 @@
 p0 = 20*10**(-6)  # p refvalue
 cal_value = 94    # Calibration value in dB
-start = 40       # Start of the sound signal in seconds
-stop = 46         # End of the sound signal in seconds
+start = 24       # Start of the sound signal in seconds
+stop = 25        # End of the sound signal in seconds
 third_octave_start = 4   # Start of third octave band array -- 4 means starting from 31.5 Hz
 freq_min = 30     # Xlim minimum value for the frequency plot
 freq_max = 10000  # Xlim maximum value for the frequency plot
