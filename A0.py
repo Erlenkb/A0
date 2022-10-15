@@ -256,8 +256,8 @@ def _plot_step_Leq(arr, fs):
     ax.set_title("Equivalent sound pressure level for \n fast (125 ms) and slow (1s) time constants")
     ax.set_xlabel("Time [s]")
     ax.set_ylabel("Magnitude [dB]")
-    fig.savefig("Leq,fast,slow_{0}s_to_{1}s.png".format(values.start,values.stop))
     plt.grid()
+    fig.savefig("Leq,fast,slow_{0}s_to_{1}s.png".format(values.start,values.stop))
     plt.show()
 
 def _Lp_from_third_oct(arr):

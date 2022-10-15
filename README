@@ -1,0 +1,2 @@
+This code take use of matplotlib, numpy and scipy.
+The main code is in A0 and take us from values.py to fetch parameter values and variables.

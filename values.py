@@ -1,6 +1,6 @@
 p0 = 20*10**(-6)  # p refvalue
 cal_value = 94    # Calibration value in dB
-start = 40        # Start of the sound signal in seconds
+start = 40       # Start of the sound signal in seconds
 stop = 46         # End of the sound signal in seconds
 third_octave_start = 4   # Start of third octave band array -- 4 means starting from 31.5 Hz
 freq_min = 30     # Xlim minimum value for the frequency plot
@@ -8,6 +8,9 @@ freq_max = 10000  # Xlim maximum value for the frequency plot
 
 nfft = 48000  # Set to zero if nfft value should be length of array
 A_weight_freq = True # If set to False, A weight will be found straight from the A-weight filter on the sound pressure signal
+
+
+
 
 
 #######  Global array values that shall not be changed #########
