@@ -137,6 +137,7 @@ def _fft_signal(array, fs):
     y = np.fft.fft(array, N)[0:int(N/2)]/N
     #y = _runningMeanFast(y,2)
     #y = np.sqrt(2)*y
+    y = 2*y
     p_y = 20*np.log10(np.abs(y) / values.p0)
     f = N*np.arange((N/2))/N
     return f, p_y
@@ -250,15 +251,17 @@ def _plot_step_Leq(arr, fs):
     l_eq_125ms.append(l_eq_125ms[-1])
 
     fig, ax = plt.subplots(figsize=(8,7))
-    ax.step(time_125ms, l_eq_125ms, color="olive", where="post",label=str("$L_{eq,125ms}$ - $L_{eq,tot}$ : "+ str(round(leq_tot_125,1)) +" dB"))
-    ax.step(time_1s, l_eq_1s,where="post", color="forestgreen", label=str("$L_{eq,1s}$ - $L_{eq,tot}$: " + str(round(leq_tot_125,1)) +" dB"))
+    if (values.plot == True) :
+        ax.step(time_125ms, l_eq_125ms, color="olive", where="post",label=str("$L_{eq,125ms}$ - $L_{eq,tot}$ : "+ str(round(leq_tot_125,1)) +" dB"))
+        ax.step(time_1s, l_eq_1s,where="post", color="forestgreen", label=str("$L_{eq,1s}$ - $L_{eq,tot}$: " + str(round(leq_tot_125,1)) +" dB"))
     ax.legend()
     ax.set_title("Equivalent sound pressure level for \n fast (125 ms) and slow (1s) time constants")
     ax.set_xlabel("Time [s]")
     ax.set_ylabel("Magnitude [dB]")
     plt.grid()
     fig.savefig("Pictures\Leq,fast,slow_{0}s_to_{1}s.png".format(values.start,values.stop))
-    plt.show()
+    
+    if (values.plot == True) : plt.show()
 
 def _Lp_from_third_oct(arr):
     """Return the sound pressure level from the third octave band array
@@ -325,12 +328,13 @@ def _plot_fft_and_third_oct(freq, fft, third_oct_val, third_oct_step, fft_A, fre
     Lp_fft_A = _Lp_from_freq(fft_A,freq_A)
     Lp_third_oct_A = _Lp_from_freq(third_oct_val_A,third_oct_step)
 
-    ax.plot(freq, np.abs(fft), color="olive",label="FFT Z-weighted")
-    #ax.plot(freq_A, np.abs(fft_A), color="olive",label="FFT A-weighted")
-    ax.step(third_oct_step, third_oct_val, linewidth=2.2, where="mid", 
-            color="dimgray", label="1/3-octave filter Z-weighted")
-    ax.step(third_oct_step, third_oct_val_A, linewidth=2.2, 
-            color="forestgreen", where="mid", label="1/3-octave filter A-weighted")
+    if (values.plot == True):
+        ax.plot(freq, np.abs(fft), color="olive",label="FFT Z-weighted")
+        #ax.plot(freq_A, np.abs(fft_A), color="olive",label="FFT A-weighted")
+        ax.step(third_oct_step, third_oct_val, linewidth=2.2, where="mid", 
+                color="dimgray", label="1/3-octave filter Z-weighted")
+        ax.step(third_oct_step, third_oct_val_A, linewidth=2.2, 
+                color="forestgreen", where="mid", label="1/3-octave filter A-weighted")
     
     ax.set_title("FFT- and Third octave bank of Z- and A-weighted sound signal") #\nLp,fft: {0} dB - Lp,fft,A-weight: {2} dB\nLp,Third_oct: {1} dB - Lp,Third_oct,A-weight: {3} dB".format(round(Lp_fft,1),round(Lp_third_oct,1),round(Lp_fft_A,1),round(Lp_third_oct_A,1)))
     ax.set_xlabel("Frequency [Hz]")
@@ -344,7 +348,8 @@ def _plot_fft_and_third_oct(freq, fft, third_oct_val, third_oct_step, fft_A, fre
     ax.legend()
     fig.savefig("Pictures\FFT&Third_oct_{0} s_to_{1} s.png".format(values.start,values.stop))
     
-    plt.show()
+    if (values.plot == True) : plt.show()
+    
     return Lp_fft, Lp_fft_A, Lp_third_oct, Lp_third_oct_A
 
 def _print_stuff(fs_sound_file=0, sound_file=0, cal_before=0, cal_after=0, A=0, Lp_fft=0, Lp_fft_A=0, third_oct=0, third_oct_A=0, cal_before_Lp=0,cal_after_Lp=0, array=0):

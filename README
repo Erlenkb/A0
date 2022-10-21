@@ -1,2 +1,7 @@
 This code take use of matplotlib, numpy and scipy.
-The main code is in A0 and take us from values.py to fetch parameter values and variables.
+The main code is in A0 and use of values.py to fetch parameter values and variables.
+
+problems to be fixed: 
+* Lp from FFT increases with length of signal to analyze. Doesnt match Lp from pressure signal. 
+* Lp from FFT is 3dB lower than Lp from pressure signal. Take only the real part of the symmetrical FFT, therefore multiply the array with 2
+    to achieve a better Lp so to not loose the energy spread from the FFT.
