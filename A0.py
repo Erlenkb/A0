@@ -20,7 +20,6 @@ plt.rc('figure', titlesize=BIGGER_SIZE)
 ###########################
 
 
-
 def _time_to_discrete(timeval,fs):
     """Returns discrete timevalue
     Args:
@@ -107,7 +106,7 @@ def _Lp_from_freq(fft, freq):
     """
     it = []
     for i, val in enumerate(freq):
-        if (val >= 0 and val <= 22390):
+        if (val >= 25 and val <= 15000):
             it.append(i)
     Lp = 0
     for i in it:
@@ -382,15 +381,16 @@ def _print_stuff(fs_sound_file=0, sound_file=0, cal_before=0, cal_after=0, A=0, 
     print("\n******************************************")
 
 
-
 if __name__ == '__main__':
     
     #**********  Generate sound pressure arrays *******
+    
     fs_sound_file, sound_file = wavfile.read("A0_lydfil.wav")
     fs_cal, cal_before = wavfile.read("cal_before.wav")
     fs_cal, cal_after = wavfile.read("cal_after.wav")
     
     #*********   Check calibration, find scaling factor and scale sound pressure array******
+    
     cal_before_Lp, cal_after_Lp, A = _check_calibration(cal_before,cal_after)
     array, A = _scale_array(sound_file,cal_before)
     
@@ -399,13 +399,16 @@ if __name__ == '__main__':
     array = array[start:stop]
     
     #*********   Filter sound pressure array into A-weighted array *******
+    
     array_A_weighted = _A_weight(array, fs_sound_file)
     
     #*********   Calculate the Leq arrays for fast (125 ms) and slow (1 s) time constants  ******
+    
     l_eq_125ms, time_125ms, leq_tot_125 = _Leq_125ms(array,fs_cal)
     l_eq_1s, time_1s, leq_tot_1 = _Leq_1s(array,fs_cal)
     
     #*********   Generate the FFT and frequency array for Z- and A-weighted sound pressure array ******
+   
     freq, fft = _fft_signal(array, fs_sound_file)
     freq_A, fft_A = _fft_signal(array_A_weighted, fs_sound_file)
 
@@ -419,14 +422,17 @@ if __name__ == '__main__':
                                                           values.third_octave_lower[values.third_octave_start:])
     
     #*********   Plot the FFT and 1/3 octave band values and return the Lp values for these *****
+   
     Lp_fft, Lp_fft_A, third_oct, third_oct_A  = _plot_fft_and_third_oct(freq, fft, filtered_signal, 
                             values.third_octave_center_frequencies[values.third_octave_start:], 
                             fft_A, freq_A, filtered_signal_A)
 
     #*********   plot the Leq values in steps   ******
+   
     _plot_step_Leq(array, fs_cal)
     
     #*********   Print the important parameters ******
+    
     _print_stuff(fs_sound_file, sound_file, cal_before, cal_after, A, 
                  Lp_fft, Lp_fft_A, third_oct, third_oct_A, cal_before_Lp,
                  cal_after_Lp, array)
